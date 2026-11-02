@@ -1,17 +1,8 @@
 import { Hono } from 'hono'
-import type { ProposeRequest, User, WritePayload } from '../shared/types'
+import type { BranchMetaRequest, CreateBranchRequest, ProposeRequest, User, WritePayload } from '../shared/types'
 import { env } from './env'
-import {
-  closePull,
-  commitTranslations,
-  createClient,
-  getPullDetail,
-  getSnapshot,
-  HttpError,
-  listTranslationPulls,
-  mergePull,
-  proposeChanges,
-} from './github'
+import { HttpError } from './errors'
+import { getRepository, type ProjectEdit } from './repository'
 import { getSession, type Session } from './session'
 
 type Variables = { session: Session }
@@ -26,7 +17,11 @@ api.get('/me', (c) => {
 })
 
 api.get('/config', (c) =>
-  c.json({ repo: `${env.owner}/${env.repo}`, baseBranch: env.baseBranch, localesDir: env.localesDir }),
+  c.json({
+    repo: `${env.owner}/${env.repo}`,
+    baseBranch: env.baseBranch,
+    source: env.localDataDir ? 'local' : 'github',
+  }),
 )
 
 api.use('*', async (c, next) => {
@@ -36,65 +31,89 @@ api.use('*', async (c, next) => {
   await next()
 })
 
+api.get('/projects', async (c) => c.json(await getRepository(c.get('session')).listProjects()))
+
 api.get('/translations', async (c) => {
+  const project = c.req.query('project')
+  if (!project) throw new HttpError(400, 'A project is required')
   const branch = c.req.query('branch') ?? env.baseBranch
-  const octokit = createClient(c.get('session').token)
-  return c.json(await getSnapshot(octokit, branch))
+  return c.json(await getRepository(c.get('session')).getSnapshot(project, branch))
 })
 
-api.post('/propose', async (c) => {
-  const body = (await c.req.json()) as ProposeRequest
+api.get('/branches', async (c) => c.json(await getRepository(c.get('session')).listBranches()))
+
+/** Stage one: start a change. Edits are saved into it afterwards. */
+api.post('/branches', async (c) => {
+  const body = (await c.req.json()) as CreateBranchRequest
   if (!body.title?.trim()) throw new HttpError(400, 'A title is required')
   const session = c.get('session')
-  const octokit = createClient(session.token)
-  const pr = await proposeChanges(
-    octokit,
-    session.login,
-    body.title.trim(),
-    body.description ?? '',
+  const result = await getRepository(session).createBranch(session.login, {
+    title: body.title.trim(),
+    description: body.description?.trim() ?? '',
+  })
+  return c.json(result, 201)
+})
+
+api.patch('/branches/:branch', async (c) => {
+  const body = (await c.req.json()) as BranchMetaRequest
+  if (!body.title?.trim()) throw new HttpError(400, 'A title is required')
+  await getRepository(c.get('session')).updateBranchMeta(c.req.param('branch'), {
+    title: body.title.trim(),
+    description: body.description?.trim() ?? '',
+  })
+  return c.json({ ok: true })
+})
+
+api.get('/branches/:branch', async (c) =>
+  c.json(await getRepository(c.get('session')).getBranchDetail(c.req.param('branch'))),
+)
+
+api.post('/branches/:branch/commit', async (c) => {
+  const body = (await c.req.json()) as WritePayload
+  if (!body.project) throw new HttpError(400, 'A project is required')
+  const repository = getRepository(c.get('session'))
+  const branch = c.req.param('branch')
+  const detail = await repository.getBranchDetail(branch)
+  if (detail.pull && detail.pull.state !== 'open') throw new HttpError(400, 'This change is closed')
+  const result = await repository.commitTranslations(
+    body.project,
+    branch,
     body.expectedHeadSha,
-    body.locales,
-  )
-  return c.json(pr, 201)
-})
-
-api.get('/pulls', async (c) => {
-  const octokit = createClient(c.get('session').token)
-  return c.json(await listTranslationPulls(octokit))
-})
-
-api.get('/pulls/:number', async (c) => {
-  const octokit = createClient(c.get('session').token)
-  return c.json(await getPullDetail(octokit, parseNumber(c.req.param('number'))))
-})
-
-api.post('/pulls/:number/commit', async (c) => {
-  const body = (await c.req.json()) as WritePayload & { message?: string }
-  const octokit = createClient(c.get('session').token)
-  const number = parseNumber(c.req.param('number'))
-  const detail = await getPullDetail(octokit, number)
-  if (detail.state !== 'open') throw new HttpError(400, 'Pull request is not open')
-  const result = await commitTranslations(
-    octokit,
-    detail.branch,
-    body.expectedHeadSha,
-    body.locales,
-    body.message?.trim() || `Update translations (#${number})`,
+    toEdit(body),
+    `Update translations (${detail.title})`,
   )
   return c.json(result)
 })
 
+/** Stage two: open the pull request for a draft branch. */
+api.post('/branches/:branch/propose', async (c) => {
+  const body = (await c.req.json()) as ProposeRequest
+  if (!body.title?.trim()) throw new HttpError(400, 'A title is required')
+  const pull = await getRepository(c.get('session')).openPull(c.req.param('branch'), body.title.trim(), body.description ?? '')
+  return c.json(pull, 201)
+})
+
+api.delete('/branches/:branch', async (c) => {
+  await getRepository(c.get('session')).deleteBranch(c.req.param('branch'))
+  return c.json({ ok: true })
+})
+
 api.post('/pulls/:number/merge', async (c) => {
-  const octokit = createClient(c.get('session').token)
-  await mergePull(octokit, parseNumber(c.req.param('number')))
+  await getRepository(c.get('session')).mergePull(parseNumber(c.req.param('number')))
   return c.json({ ok: true })
 })
 
 api.post('/pulls/:number/close', async (c) => {
-  const octokit = createClient(c.get('session').token)
-  await closePull(octokit, parseNumber(c.req.param('number')))
+  await getRepository(c.get('session')).closePull(parseNumber(c.req.param('number')))
   return c.json({ ok: true })
 })
+
+function toEdit(body: WritePayload): ProjectEdit {
+  return {
+    content: { values: body.values ?? {}, fieldValues: body.fieldValues ?? {} },
+    placeholderExamples: body.placeholderExamples,
+  }
+}
 
 function parseNumber(value: string): number {
   const number = Number(value)

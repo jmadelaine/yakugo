@@ -1,0 +1,26 @@
+{
+  "extName": {
+    "message": "Shop Helper",
+    "description": "Extension name shown in the browser toolbar"
+  },
+  "extDescription": {
+    "message": "Track prices and get alerts on the items you follow."
+  },
+  "popupTitle": {
+    "message": "Followed items",
+    "description": "Heading of the popup"
+  },
+  "followButton": {
+    "message": "Follow price",
+    "description": "Button on product pages; keep it short"
+  },
+  "priceDrop": {
+    "message": "Price dropped to $PRICE$",
+    "description": "Notification text",
+    "placeholders": {
+      "price": {
+        "content": "$1"
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "extName": {
+    "message": "ショップヘルパー"
+  },
+  "extDescription": {
+    "message": "フォローした商品の価格を追跡して通知を受け取ります。"
+  },
+  "popupTitle": {
+    "message": "フォロー中の商品"
+  },
+  "priceDrop": {
+    "message": "価格が$PRICE$に下がりました",
+    "placeholders": {
+      "price": {
+        "content": "$1"
+      }
+    }
+  }
+}

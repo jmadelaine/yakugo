@@ -5,7 +5,7 @@ import { logger } from 'hono/logger'
 import { api } from './api'
 import { auth } from './auth'
 import { env } from './env'
-import { HttpError } from './github'
+import { HttpError } from './errors'
 
 const app = new Hono()
 
@@ -28,5 +28,6 @@ if (env.isProduction) {
 }
 
 serve({ fetch: app.fetch, port: env.port }, () => {
-  console.log(`API listening on http://localhost:${env.port} (repo ${env.owner}/${env.repo}, base ${env.baseBranch})`)
+  const source = env.localDataDir ? `local folder ${env.localDataDir}` : `repo ${env.owner}/${env.repo}`
+  console.log(`API listening on http://localhost:${env.port} (${source}, base ${env.baseBranch})`)
 })

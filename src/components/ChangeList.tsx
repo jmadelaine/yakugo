@@ -18,6 +18,32 @@ export function ChangeSummary({ changes }: { changes: TranslationChange[] }) {
   )
 }
 
+/** Diff of placeholder example values, one row per placeholder name. */
+export function ExampleChangeList({ changes }: { changes: TranslationChange[] }) {
+  if (changes.length === 0) return null
+  return (
+    <section className="change-group">
+      <h3 className="change-key">{'Placeholder examples'}</h3>
+      <table className="change-table">
+        <tbody>
+          {changes.map((change) => (
+            <tr key={change.key} className={`change ${change.type}`}>
+              <th scope="row">
+                <code>{change.key}</code>
+              </th>
+              <td className="change-type">{LABEL[change.type]}</td>
+              <td>
+                {change.before !== undefined && <del>{change.before}</del>}
+                {change.after !== undefined && <ins>{change.after}</ins>}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  )
+}
+
 /** Translation-aware diff: one block per key, one row per locale. */
 export function ChangeList({ changes }: { changes: TranslationChange[] }) {
   if (changes.length === 0) return <p className="muted">{'No translation changes.'}</p>
@@ -29,8 +55,10 @@ export function ChangeList({ changes }: { changes: TranslationChange[] }) {
           <table className="change-table">
             <tbody>
               {group.changes.map((change) => (
-                <tr key={change.locale} className={`change ${change.type}`}>
-                  <th scope="row">{change.locale}</th>
+                <tr key={change.locale ?? `field:${change.field}`} className={`change ${change.type}`}>
+                  <th scope="row" className={change.field !== undefined ? 'field-col' : undefined}>
+                    {change.locale ?? change.field}
+                  </th>
                   <td className="change-type">{LABEL[change.type]}</td>
                   <td>
                     {change.before !== undefined && <del>{change.before}</del>}

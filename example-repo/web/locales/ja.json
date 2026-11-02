@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "home": "ホーム",
+    "products": "商品",
+    "cart": "カート",
+    "account": "アカウント"
+  },
+  "cart": {
+    "empty": "カートは空です",
+    "itemCount": "{count}点",
+    "checkout": "レジに進む",
+    "subtotal": "小計: {price}"
+  },
+  "checkout": {
+    "title": "お会計",
+    "shipping": "配送先住所",
+    "payment": "お支払い",
+    "placeOrder": "注文を確定する",
+    "eta": "{date}までにお届け"
+  },
+  "errors": {
+    "required": "この項目は必須です"
+  },
+  "greeting": {
+    "morning": "おはようございます、{userName}さん",
+    "afternoon": "こんにちは、{userName}さん"
+  },
+  "account": {
+    "points": "{count}ポイントをお持ちです"
+  }
+}

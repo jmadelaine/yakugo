@@ -3,7 +3,9 @@ import {
   diffTranslations,
   flatten,
   groupChangesByKey,
+  mergeTranslations,
   parseTranslationFile,
+  diffProject,
   serializeTranslationFile,
   slugify,
   unflatten,
@@ -64,5 +66,38 @@ describe('slugify', () => {
   it('makes a branch-safe slug', () => {
     expect(slugify('Fix German checkout copy!')).toBe('fix-german-checkout-copy')
     expect(slugify('   ')).toBe('update')
+  })
+})
+
+describe('mergeTranslations', () => {
+  const base = { en: { a: '1', b: '2', c: '3' } }
+
+  it('takes one-sided changes from either side', () => {
+    const result = mergeTranslations(base, { en: { a: '1', b: 'ours', c: '3' } }, { en: { a: 'theirs', b: '2' } })
+    expect(result.conflicts).toEqual([])
+    expect(result.merged).toEqual({ en: { a: 'theirs', b: 'ours' } })
+  })
+
+  it('reports keys changed differently on both sides and keeps ours', () => {
+    const result = mergeTranslations(base, { en: { a: 'x', b: '2', c: '3' } }, { en: { a: 'y', b: '2', c: '3' } })
+    expect(result.conflicts).toEqual([{ locale: 'en', key: 'a' }])
+    expect(result.merged.en.a).toBe('x')
+  })
+
+  it('accepts identical changes on both sides', () => {
+    const result = mergeTranslations(base, { en: { a: 'same' } }, { en: { a: 'same' } })
+    expect(result.conflicts).toEqual([])
+    expect(result.merged).toEqual({ en: { a: 'same' } })
+  })
+})
+
+describe('diffProject', () => {
+  it('tags field changes with field and locale changes with locale', () => {
+    const before = { values: { en: { a: '1' } }, fieldValues: { description: { a: 'old' } } }
+    const after = { values: { en: { a: '2' } }, fieldValues: { description: { a: 'new' } } }
+    expect(diffProject(before, after)).toEqual([
+      { key: 'a', locale: 'en', type: 'changed', before: '1', after: '2' },
+      { key: 'a', field: 'description', type: 'changed', before: 'old', after: 'new' },
+    ])
   })
 })

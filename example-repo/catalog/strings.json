@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "entries": [
+    {
+      "id": "category.shoes",
+      "comment": "Top-level category",
+      "text": {
+        "en": "Shoes",
+        "ja": "シューズ"
+      }
+    },
+    {
+      "id": "category.bags",
+      "comment": "Top-level category",
+      "text": {
+        "en": "Bags",
+        "ja": "バッグ"
+      }
+    },
+    {
+      "id": "badge.new",
+      "comment": "Small badge on product cards",
+      "text": {
+        "en": "New",
+        "ja": "新着"
+      }
+    },
+    {
+      "id": "badge.sale",
+      "comment": "Small badge on product cards",
+      "text": {
+        "en": "Sale"
+      }
+    },
+    {
+      "id": "stock.low",
+      "text": {
+        "en": "Only {count} left",
+        "ja": "残り{count}点"
+      }
+    }
+  ]
+}

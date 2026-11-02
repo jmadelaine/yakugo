@@ -1,4 +1,4 @@
-import { CHANGE_TYPE, type FlatTranslations, type TranslationChange } from './types'
+import { CHANGE_TYPE, type FlatTranslations, type ProjectContent, type TranslationChange } from './types'
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
 
@@ -87,7 +87,7 @@ export function diffTranslations(
   for (const locale of locales) {
     changes.push(...diffLocale(locale, before[locale] ?? {}, after[locale] ?? {}))
   }
-  return changes.sort((a, b) => a.key.localeCompare(b.key) || a.locale.localeCompare(b.locale))
+  return changes.sort((a, b) => a.key.localeCompare(b.key) || (a.locale ?? '').localeCompare(b.locale ?? ''))
 }
 
 export interface KeyChangeGroup {
@@ -115,4 +115,89 @@ export function slugify(text: string): string {
       .replace(/^-+|-+$/g, '')
       .slice(0, 40) || 'update'
   )
+}
+
+export interface LocaleWrite {
+  path: string
+  content: string
+}
+
+export interface MergeConflict {
+  locale: string
+  key: string
+}
+
+export interface MergeResult {
+  merged: Record<string, FlatTranslations>
+  conflicts: MergeConflict[]
+}
+
+/**
+ * Key-level three-way merge. A key changed on only one side takes that side's
+ * value; a key changed to different values on both sides is a conflict and
+ * keeps `ours`.
+ */
+export function mergeTranslations(
+  base: Record<string, FlatTranslations>,
+  ours: Record<string, FlatTranslations>,
+  theirs: Record<string, FlatTranslations>,
+): MergeResult {
+  const merged: Record<string, FlatTranslations> = {}
+  const conflicts: MergeConflict[] = []
+  const locales = new Set([...Object.keys(base), ...Object.keys(ours), ...Object.keys(theirs)])
+  for (const locale of locales) {
+    const b = base[locale] ?? {}
+    const o = ours[locale] ?? {}
+    const t = theirs[locale] ?? {}
+    const out: FlatTranslations = {}
+    const keys = new Set([...Object.keys(b), ...Object.keys(o), ...Object.keys(t)])
+    for (const key of keys) {
+      let value: string | undefined
+      if (t[key] === b[key]) value = o[key]
+      else if (o[key] === b[key] || o[key] === t[key]) value = t[key]
+      else {
+        conflicts.push({ locale, key })
+        value = o[key]
+      }
+      if (value !== undefined) out[key] = value
+    }
+    merged[locale] = out
+  }
+  return { merged, conflicts }
+}
+
+/** Diff of locale values and shared fields. Field changes carry `field` instead of `locale`. */
+export function diffProject(before: ProjectContent, after: ProjectContent): TranslationChange[] {
+  const fieldChanges = diffTranslations(before.fieldValues, after.fieldValues).map(
+    ({ locale, ...change }): TranslationChange => ({ ...change, field: locale }),
+  )
+  // Within a key: locale values first, then shared fields.
+  const rank = (change: TranslationChange) => (change.locale !== undefined ? 0 : 1)
+  return [...diffTranslations(before.values, after.values), ...fieldChanges].sort(
+    (a, b) =>
+      a.key.localeCompare(b.key) || rank(a) - rank(b) || (a.locale ?? a.field ?? '').localeCompare(b.locale ?? b.field ?? ''),
+  )
+}
+
+export interface ProjectMergeResult {
+  merged: ProjectContent
+  /** Human-readable "locale: key" / "field: key" labels of conflicting cells. */
+  conflicts: string[]
+}
+
+/** Three-way merge of values and shared fields; see `mergeTranslations`. */
+export function mergeProject(base: ProjectContent, ours: ProjectContent, theirs: ProjectContent): ProjectMergeResult {
+  const values = mergeTranslations(base.values, ours.values, theirs.values)
+  const fields = mergeTranslations(base.fieldValues, ours.fieldValues, theirs.fieldValues)
+  return {
+    merged: { values: values.merged, fieldValues: fields.merged },
+    conflicts: [...values.conflicts, ...fields.conflicts].map((conflict) => `${conflict.locale}: ${conflict.key}`),
+  }
+}
+
+/** Diff of placeholder example values. Each change carries the placeholder name as `key`. */
+export function diffExamples(before: Record<string, string>, after: Record<string, string>): TranslationChange[] {
+  return diffLocale('example', before, after)
+    .map(({ locale: _locale, ...change }): TranslationChange => ({ ...change, field: 'example' }))
+    .sort((a, b) => a.key.localeCompare(b.key))
 }

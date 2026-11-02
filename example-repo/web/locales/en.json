@@ -1,0 +1,36 @@
+{
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "cart": "Cart",
+    "account": "Account"
+  },
+  "cart": {
+    "empty": "Your cart is empty",
+    "itemCount": "{count} items",
+    "checkout": "Go to checkout",
+    "remove": "Remove",
+    "subtotal": "Subtotal: {price}"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "shipping": "Shipping address",
+    "payment": "Payment",
+    "placeOrder": "Place order",
+    "success": "Thanks, {userName}! Order #{orderId} is on its way.",
+    "eta": "Arrives by {date}"
+  },
+  "errors": {
+    "network": "Could not reach the server. Check your connection.",
+    "required": "This field is required"
+  },
+  "greeting": {
+    "morning": "Good morning, {userName}",
+    "afternoon": "Good afternoon, {userName}",
+    "welcomeBack": "Welcome back, {userName}! You have {count} items waiting in your cart."
+  },
+  "account": {
+    "lastLogin": "Last signed in {date} from {city}",
+    "points": "You have {count} points"
+  }
+}

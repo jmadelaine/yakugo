@@ -1,11 +1,14 @@
 import { Link, Route, Routes, useNavigate } from 'react-router'
+import { Avatar } from './components/Avatar'
+import { Button } from './components/Button'
 import { api } from './lib/api'
 import { AuthGate } from './lib/auth'
 import { useUser } from './lib/userContext'
 import { useAsync } from './lib/useAsync'
 import { EditorPage } from './pages/EditorPage'
 import { HomePage } from './pages/HomePage'
-import { PullRequestPage } from './pages/PullRequestPage'
+import { ChangePage } from './pages/ChangePage'
+import { ProjectPage } from './pages/ProjectPage'
 
 export function App() {
   return (
@@ -13,10 +16,17 @@ export function App() {
       <Header />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/edit" element={<EditorPage />} />
-        <Route path="/pr/:number" element={<PullRequestPage />} />
-        <Route path="/pr/:number/edit" element={<EditorPage />} />
-        <Route path="*" element={<main className="page">{'Page not found'}</main>} />
+        <Route path="/project/:project" element={<ProjectPage />} />
+        <Route path="/change/:branch" element={<ChangePage />} />
+        <Route path="/change/:branch/edit/:project" element={<EditorPage />} />
+        <Route
+          path="*"
+          element={
+            <main className="page">
+              <h1>{'Page not found'}</h1>
+            </main>
+          }
+        />
       </Routes>
     </AuthGate>
   )
@@ -37,17 +47,17 @@ function Header() {
       <Link to="/" className="brand">
         {'Translation editor'}
       </Link>
-      {config && (
+      {config && config.source === 'github' && (
         <a className="repo" href={`https://github.com/${config.repo}`} target="_blank" rel="noreferrer">
           {config.repo}
         </a>
       )}
-      <span className="spacer" />
-      <img className="avatar" src={user.avatarUrl} alt="" />
-      <span>{user.name ?? user.login}</span>
-      <button className="button small" onClick={logout}>
-        {'Sign out'}
-      </button>
+      {config && config.source === 'local' && <span className="repo">{config.repo}</span>}
+      <div className="header-user">
+        <Avatar src={user.avatarUrl} name={user.name ?? user.login} />
+        <span>{user.name ?? user.login}</span>
+        <Button onClick={logout}>{'Sign out'}</Button>
+      </div>
     </header>
   )
 }

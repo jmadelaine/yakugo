@@ -1,6 +1,10 @@
 import type {
+  BranchDetail,
+  BranchMetaRequest,
+  BranchSummary,
+  CreateBranchRequest,
+  ProjectSummary,
   ProposeRequest,
-  PullRequestDetail,
   PullRequestSummary,
   TranslationSnapshot,
   User,
@@ -41,20 +45,31 @@ function post<T>(path: string, body?: unknown): Promise<T> {
 export interface AppConfig {
   repo: string
   baseBranch: string
-  localesDir: string
+  /** Where translations live: a GitHub repo, or a local folder in development. */
+  source: 'github' | 'local'
 }
 
 export const api = {
   me: () => request<User>('/api/me'),
   config: () => request<AppConfig>('/api/config'),
   logout: () => post<{ ok: true }>('/auth/logout'),
-  translations: (branch?: string) =>
-    request<TranslationSnapshot>(`/api/translations${branch ? `?branch=${encodeURIComponent(branch)}` : ''}`),
-  propose: (body: ProposeRequest) => post<PullRequestSummary>('/api/propose', body),
-  pulls: () => request<PullRequestSummary[]>('/api/pulls'),
-  pull: (number: number) => request<PullRequestDetail>(`/api/pulls/${number}`),
-  commitToPull: (number: number, body: WritePayload & { message?: string }) =>
-    post<{ sha: string; changedFiles: string[] }>(`/api/pulls/${number}/commit`, body),
+  projects: () => request<ProjectSummary[]>('/api/projects'),
+  translations: (project: string, branch?: string) => {
+    const params = new URLSearchParams({ project })
+    if (branch) params.set('branch', branch)
+    return request<TranslationSnapshot>(`/api/translations?${params}`)
+  },
+  branches: () => request<BranchSummary[]>('/api/branches'),
+  branch: (branch: string) => request<BranchDetail>(`/api/branches/${encodeURIComponent(branch)}`),
+  createBranch: (body: CreateBranchRequest) => post<{ branch: string }>('/api/branches', body),
+  updateBranch: (branch: string, body: BranchMetaRequest) =>
+    request<{ ok: true }>(`/api/branches/${encodeURIComponent(branch)}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  commitToBranch: (branch: string, body: WritePayload) =>
+    post<{ sha: string; changedFiles: string[] }>(`/api/branches/${encodeURIComponent(branch)}/commit`, body),
+  propose: (branch: string, body: ProposeRequest) =>
+    post<PullRequestSummary>(`/api/branches/${encodeURIComponent(branch)}/propose`, body),
+  deleteBranch: (branch: string) =>
+    request<{ ok: true }>(`/api/branches/${encodeURIComponent(branch)}`, { method: 'DELETE' }),
   mergePull: (number: number) => post<{ ok: true }>(`/api/pulls/${number}/merge`),
   closePull: (number: number) => post<{ ok: true }>(`/api/pulls/${number}/close`),
 }

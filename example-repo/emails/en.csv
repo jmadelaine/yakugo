@@ -1,0 +1,5 @@
+id,text,notes
+welcome_subject,Welcome to Shop!,Subject line
+welcome_body,Thanks for signing up. Your account is ready.,First paragraph
+reset_subject,Reset your password,
+reset_body,Click the link below to choose a new password.,Link expires after 1 hour

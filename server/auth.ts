@@ -10,6 +10,11 @@ const STATE_COOKIE = 'oauth_state'
 export const auth = new Hono()
 
 auth.get('/login', (c) => {
+  if (env.localDataDir) {
+    const login = env.localUser
+    setSession(c, { token: '', login, name: null, avatarUrl: `https://github.com/identicons/${login}.png` })
+    return c.redirect(env.appUrl)
+  }
   const state = randomBytes(16).toString('hex')
   setCookie(c, STATE_COOKIE, state, { httpOnly: true, sameSite: 'Lax', secure: env.isProduction, path: '/', maxAge: 600 })
   const params = new URLSearchParams({

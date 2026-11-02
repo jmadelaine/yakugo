@@ -1,0 +1,81 @@
+# Yakugo config. Lives at the root of the translations repo.
+#
+# Each project is one table in the editor. `path` is a sub directory of the repo and
+# `files` is the file pattern inside it. `{locale}` appears exactly once: in `files`
+# (one file per locale) or in the `value` field path (one file for all locales).
+# `fields` maps yakugo fields to where they live in a record: a dotted path for JSON,
+# a column header for CSV. `key` and `value` are built in; any other field is a shared
+# per-key column such as a description. Format comes from the file extension.
+# `sourceLocale` is the reference locale of a project, shown first in the editor; a
+# top-level `sourceLocale` would act as the default for projects that leave it out.
+
+projects:
+  # 1. Plain JSON, one file per locale. The leaf string is the value and the key is
+  #    the dotted path of nested keys. No fields needed.
+  - name: Web app
+    sourceLocale: en
+    path: web/locales
+    files: "{locale}.json"
+    # How placeholders look in this project's strings (`placeholder` stands for
+    # the placeholder's name), plus example values used for previews in the editor.
+    placeholders:
+      pattern: "{placeholder}"
+      examples:
+        count: 3
+        userName: Yuki
+        price: "¥4,980"
+        date: 12 March
+        city: Osaka
+        orderId: 48213
+
+  # 2. Structured JSON, one file per locale. Each key maps to an object; `fields`
+  #    says which property is the value. `description` is shared across locales
+  #    and stored in the source locale file.
+  - name: Browser extension
+    sourceLocale: en
+    path: extension/_locales
+    files: "{locale}/messages.json"
+    fields:
+      value: message
+      description: description
+    placeholders:
+      pattern: "$placeholder$"
+      examples:
+        PRICE: "$12.99"
+
+  # 3. Structured JSON, one file for all locales. `records` points at the array (or
+  #    object) holding the entries; the value path carries {locale}.
+  - name: Product catalog
+    sourceLocale: en
+    path: catalog
+    files: strings.json
+    records: entries
+    fields:
+      key: id
+      value: "text.{locale}"
+      comment: comment
+    placeholders:
+      pattern: "{placeholder}"
+      examples:
+        count: 2
+
+  # 4. CSV, one file for all locales. One column per locale, picked up from the
+  #    value pattern; other columns are fields.
+  - name: Marketing site
+    sourceLocale: en
+    path: marketing
+    files: strings.csv
+    fields:
+      key: Key
+      value: "{locale}"
+      context: Context
+
+  # 5. CSV, one file per locale. Shared fields live in the source locale file.
+  - name: Transactional emails
+    sourceLocale: en
+    path: emails
+    files: "{locale}.csv"
+    fields:
+      key: id
+      value: text
+      notes: notes

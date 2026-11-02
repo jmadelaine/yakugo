@@ -50,7 +50,7 @@ describe('plain per-locale JSON', () => {
 })
 
 describe('structured JSON records with a shared field', () => {
-  const p = project(`  - name: Ext\n    path: _locales\n    files: "{locale}/messages.json"\n    fields:\n      value: message\n      description: description\n`)
+  const p = project(`  - name: Ext\n    path: _locales\n    files: "{locale}/messages.json"\n    fields:\n      $value: message\n      description: description\n`)
   const files = {
     '_locales/en/messages.json': JSON.stringify({ hello: { message: 'Hello', description: 'Greeting', placeholders: {} } }),
     '_locales/de/messages.json': JSON.stringify({ hello: { message: 'Hallo', description: 'stale' } }),
@@ -78,7 +78,7 @@ describe('structured JSON records with a shared field', () => {
 })
 
 describe('one JSON file for all locales', () => {
-  const p = project(`  - name: Catalog\n    files: catalog.json\n    records: entries\n    fields:\n      key: id\n      value: "text.{locale}"\n      note: comment\n`)
+  const p = project(`  - name: Catalog\n    files: catalog.json\n    records: entries\n    fields:\n      $key: id\n      $value: "text.{locale}"\n      note: comment\n`)
   const files = {
     'catalog.json': JSON.stringify({ version: 1, entries: [{ id: 'a', comment: 'first', text: { en: 'A', de: 'Ä' } }] }),
   }
@@ -106,7 +106,7 @@ describe('one JSON file for all locales', () => {
   })
 
   it('handles nested object records keyed by property', () => {
-    const q = project(`  - name: Wide\n    files: strings.json\n    fields:\n      value: "{locale}"\n`)
+    const q = project(`  - name: Wide\n    files: strings.json\n    fields:\n      $value: "{locale}"\n`)
     const wide = { 'strings.json': JSON.stringify({ nav: { home: { en: 'Home', de: 'Start' } } }) }
     const data = decodeProject(q, wide)
     expect(data.values).toEqual({ en: { 'nav.home': 'Home' }, de: { 'nav.home': 'Start' } })
@@ -117,7 +117,7 @@ describe('one JSON file for all locales', () => {
 
 describe('CSV', () => {
   it('reads and writes a wide CSV with a column per locale', () => {
-    const p = project(`  - name: Marketing\n    files: strings.csv\n    fields:\n      key: Key\n      description: Context\n`)
+    const p = project(`  - name: Marketing\n    files: strings.csv\n    fields:\n      $key: Key\n      description: Context\n`)
     const files = { 'strings.csv': 'Key,Context,en,de\nhero.title,Top banner,Welcome,Willkommen\nhero.cta,,Buy now,\n' }
     const data = decodeProject(p, files)
     expect(data.locales).toEqual(['en', 'de'])
@@ -136,7 +136,7 @@ describe('CSV', () => {
   })
 
   it('reads and writes one CSV per locale', () => {
-    const p = project(`  - name: Legacy\n    path: legacy\n    files: "{locale}.csv"\n    fields:\n      key: id\n      value: text\n`)
+    const p = project(`  - name: Legacy\n    path: legacy\n    files: "{locale}.csv"\n    fields:\n      $key: id\n      $value: text\n`)
     const files = { 'legacy/en.csv': 'id,text\na,A\n', 'legacy/de.csv': 'id,text,extra\na,Ä,x\n' }
     const data = decodeProject(p, files)
     expect(data.values).toEqual({ en: { a: 'A' }, de: { a: 'Ä' } })
@@ -147,7 +147,7 @@ describe('CSV', () => {
 
   it('resolves {locale} in the value column of per-locale files', () => {
     const p = project(
-      `  - name: Phrase\n    path: phrase-data\n    files: "app-{locale}-copy.csv"\n    fields:\n      key: key_name\n      value: "{locale}"\n      comment: comment\n`,
+      `  - name: Phrase\n    path: phrase-data\n    files: "app-{locale}-copy.csv"\n    fields:\n      $key: key_name\n      $value: "{locale}"\n      comment: comment\n`,
     )
     const files = {
       'phrase-data/app-en-copy.csv': 'key_name,en,comment\napp_title,Shop,Page title\napp_tagline,Delivered,\n',
@@ -165,7 +165,7 @@ describe('CSV', () => {
   })
 
   it('reports a missing key column', () => {
-    const p = project(`  - name: Bad\n    files: x.csv\n    fields:\n      key: Key\n`)
+    const p = project(`  - name: Bad\n    files: x.csv\n    fields:\n      $key: Key\n`)
     expect(() => decodeProject(p, { 'x.csv': 'id,en\na,A\n' })).toThrow('key column')
   })
 })

@@ -8,19 +8,23 @@ export const CONFIG_FILE = 'yakugo.yaml'
 export const FILE_FORMAT = { JSON: 'json', CSV: 'csv' } as const
 export type FileFormat = (typeof FILE_FORMAT)[keyof typeof FILE_FORMAT]
 
-/** Built-in field names. Every other field is a shared, per-key text column. */
-export const FIELD = { KEY: 'key', VALUE: 'value' } as const
+/**
+ * Built-in fields. The `$` prefix marks them as yakugo's own in `yakugo.yaml`, so
+ * `key` and `value` stay free as names for custom columns. Every other field is a
+ * shared, per-key text column.
+ */
+export const FIELD = { KEY: '$key', VALUE: '$value' } as const
 
 /** Placeholder in `files` and in field paths. */
 export const LOCALE_TOKEN = '{locale}'
 
 /**
  * Where each field lives inside one record. JSON: dotted path, `.` for the
- * record itself. CSV: column header. `{locale}` may appear in `value` only: in
+ * record itself. CSV: column header. `{locale}` may appear in `$value` only: in
  * a file that holds all locales it selects the locale; in per-locale files it
  * is replaced by the file's locale.
  */
-export type FieldPaths = { key: string; value: string } & Record<string, string>
+export type FieldPaths = { $key: string; $value: string } & Record<string, string>
 
 export interface ProjectConfig {
   /** URL-safe id derived from the name. */
@@ -136,12 +140,16 @@ function buildProject(input: ProjectInput): ProjectConfig {
   const fields: Record<string, string> = {}
   for (const [field, value] of Object.entries(input.fields)) {
     if (typeof value !== 'string' || !value.trim()) throw new Error(`${CONFIG_FILE}: ${name}: field ${field} must be a path`)
-    if (!/^[\w-]+$/.test(field)) throw new Error(`${CONFIG_FILE}: ${name}: invalid field name "${field}"`)
+    if (field.startsWith('$') && field !== FIELD.KEY && field !== FIELD.VALUE) {
+      throw new Error(`${CONFIG_FILE}: ${name}: unknown built-in field "${field}" (built-ins are ${FIELD.KEY} and ${FIELD.VALUE})`)
+    }
+    if (!/^\$?[\w-]+$/.test(field)) throw new Error(`${CONFIG_FILE}: ${name}: invalid field name "${field}"`)
     fields[field] = value.trim()
   }
   // JSON object records are keyed by property name, and a plain leaf is its own value.
-  fields[FIELD.KEY] ??= format === FILE_FORMAT.CSV ? FIELD.KEY : '.'
-  fields[FIELD.VALUE] ??= format === FILE_FORMAT.CSV ? (perLocale ? FIELD.VALUE : LOCALE_TOKEN) : '.'
+  // CSV columns default to plain `key` and `value` headers.
+  fields[FIELD.KEY] ??= format === FILE_FORMAT.CSV ? 'key' : '.'
+  fields[FIELD.VALUE] ??= format === FILE_FORMAT.CSV ? (perLocale ? 'value' : LOCALE_TOKEN) : '.'
 
   // One file per locale, or one file whose value path selects the locale. Both at
   // once is fine too: per-locale files whose value column is named after the locale.

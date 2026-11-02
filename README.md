@@ -46,7 +46,7 @@ projects:
     path: extension/_locales
     files: "{locale}/messages.json"
     fields:
-      value: message
+      $value: message
       description: description
 
   # One CSV for every locale. Fields are column headers; the value column carries
@@ -55,8 +55,8 @@ projects:
     path: marketing
     files: strings.csv
     fields:
-      key: Key
-      value: "{locale}"
+      $key: Key
+      $value: "{locale}"
       description: Context
 
   # One CSV per locale. Shared fields live in the source locale's file.
@@ -64,8 +64,8 @@ projects:
     path: emails
     files: "{locale}.csv"
     fields:
-      key: id
-      value: text
+      $key: id
+      $value: text
       notes: notes
 
   # One JSON file for every locale, records in an array.
@@ -73,8 +73,8 @@ projects:
     files: catalog.json
     records: entries          # path to the array or object holding the records
     fields:
-      key: id
-      value: "text.{locale}"
+      $key: id
+      $value: "text.{locale}"
       note: comment
 ```
 
@@ -82,11 +82,12 @@ Rules:
 
 - `path` is a sub directory of the repo; `files` is the pattern inside it. `format`
   is `json` or `csv` and defaults to the file extension.
-- `{locale}` goes in `files` (one file per locale), in the `value` field path (one file
+- `{locale}` goes in `files` (one file per locale), in the `$value` field path (one file
   holding all locales), or both (per-locale files whose value column is named after
   the locale, e.g. `key_name,en,comment` in `app-en.csv`).
-- `key` and `value` are built-in fields. Every other entry under `fields` is a shared
-  per-key text column (description, context, notes, …).
+- `$key` and `$value` are yakugo's built-in fields; the `$` marks them as reserved.
+  Every other entry under `fields` is a shared per-key text column (description,
+  context, notes, …).
 - JSON field paths are dotted paths inside a record; `.` means the record itself.
   CSV field paths are column headers.
 - `placeholders.pattern` tells the editor how to spot placeholders in a string. Cells
@@ -105,9 +106,10 @@ Rules:
 branch; proposed branches and PRs are kept in `example-repo/.state.json` (gitignored).
 Sign-in needs no OAuth app and signs you in as your OS user (`LOCAL_USER` overrides).
 
-1. `cp .env.example .env` and set `LOCAL_DATA_DIR=example-repo`.
-2. `pnpm install`
-3. `pnpm dev`
+1. `pnpm install`
+2. `pnpm dev`
+
+No `.env` is needed. If one exists it is read for `PORT`, `APP_URL` and `LOCAL_USER`.
 
 Reset the example: `git checkout example-repo/locales && rm -f example-repo/.state.json`.
 
@@ -116,9 +118,9 @@ Reset the example: `git checkout example-repo/locales && rm -f example-repo/.sta
 1. Create a GitHub OAuth App (Settings → Developer settings → OAuth Apps).
    Set the callback URL to `<APP_URL>/auth/callback`
    (`http://localhost:5173/auth/callback` for local development).
-2. `cp .env.example .env` and fill in the values.
+2. `cp .env.example .env` and fill in the values. Leave `LOCAL_DATA_DIR` unset.
 3. `pnpm install`
-4. `pnpm dev` starts the Vite dev server on :5173 and the API on :8787.
+4. `pnpm dev:github` starts the Vite dev server on :5173 and the API on :8787.
 
 Scripts: `pnpm test` (vitest), `pnpm typecheck`, `pnpm lint`, `pnpm build` then `pnpm start` (API serves `dist/`).
 

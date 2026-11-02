@@ -15,7 +15,7 @@ projects:
     files: "{locale}/strings.json"
     sourceLocale: en
 `
-    const base = { format: 'json', records: '', fields: { key: '.', value: '.' }, customFields: [] }
+    const base = { format: 'json', records: '', fields: { $key: '.', $value: '.' }, customFields: [] }
     expect(parseConfig(text, defaults)).toEqual({
       projects: [
         { ...base, id: 'web-app', name: 'Web app', path: 'apps/web/locales', files: '{locale}.json', sourceLocale: 'ja' },
@@ -45,18 +45,25 @@ projects:
   it('infers format and layout, and validates {locale} placement', () => {
     const csv = parseConfig('projects:\n  - name: A\n    files: all.csv\n', defaults).projects[0]
     expect(csv.format).toBe('csv')
-    expect(csv.fields).toEqual({ key: 'key', value: '{locale}' })
+    expect(csv.fields).toEqual({ $key: 'key', $value: '{locale}' })
     const perLocaleCsv = parseConfig('projects:\n  - name: A\n    files: "{locale}.csv"\n', defaults).projects[0]
-    expect(perLocaleCsv.fields).toEqual({ key: 'key', value: 'value' })
-    const wideJson = parseConfig('projects:\n  - name: A\n    files: all.json\n    fields:\n      value: "{locale}"\n      note: comment\n', defaults).projects[0]
+    expect(perLocaleCsv.fields).toEqual({ $key: 'key', $value: 'value' })
+    const wideJson = parseConfig('projects:\n  - name: A\n    files: all.json\n    fields:\n      $value: "{locale}"\n      note: comment\n', defaults).projects[0]
     expect(wideJson.customFields).toEqual(['note'])
     expect(projectFiles(wideJson)).toEqual({ kind: 'single', path: 'all.json' })
     expect(() => parseConfig('projects:\n  - name: A\n    files: all.json\n', defaults)).toThrow('{locale} must appear')
     // Per-locale files whose value column is named after the locale.
-    const both = parseConfig('projects:\n  - name: A\n    files: "{locale}.csv"\n    fields:\n      value: "{locale}"\n', defaults).projects[0]
-    expect(both.fields.value).toBe('{locale}')
-    expect(() => parseConfig('projects:\n  - name: A\n    files: all.json\n    fields:\n      value: "{locale}"\n      note: "{locale}.x"\n', defaults)).toThrow('only the value path')
+    const both = parseConfig('projects:\n  - name: A\n    files: "{locale}.csv"\n    fields:\n      $value: "{locale}"\n', defaults).projects[0]
+    expect(both.fields.$value).toBe('{locale}')
+    expect(() => parseConfig('projects:\n  - name: A\n    files: all.json\n    fields:\n      $value: "{locale}"\n      note: "{locale}.x"\n', defaults)).toThrow('only the value path')
     expect(() => parseConfig('projects:\n  - name: A\n    files: x.json\n    format: xml\n', defaults)).toThrow('json or csv')
+  })
+
+  it('reserves $ for built-in fields and leaves key and value free as custom names', () => {
+    const custom = parseConfig('projects:\n  - name: A\n    files: "{locale}.csv"\n    fields:\n      $key: id\n      $value: text\n      key: legacy_key\n      value: notes\n', defaults).projects[0]
+    expect(custom.fields).toEqual({ $key: 'id', $value: 'text', key: 'legacy_key', value: 'notes' })
+    expect(custom.customFields).toEqual(['key', 'value'])
+    expect(() => parseConfig('projects:\n  - name: A\n    files: "{locale}.csv"\n    fields:\n      $id: id\n', defaults)).toThrow('unknown built-in field "$id"')
   })
 })
 

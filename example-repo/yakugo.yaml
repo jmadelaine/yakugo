@@ -2,10 +2,11 @@
 #
 # Each project is one table in the editor. `path` is a sub directory of the repo and
 # `files` is the file pattern inside it. `{locale}` appears exactly once: in `files`
-# (one file per locale) or in the `value` field path (one file for all locales).
+# (one file per locale) or in the `$value` field path (one file for all locales).
 # `fields` maps yakugo fields to where they live in a record: a dotted path for JSON,
-# a column header for CSV. `key` and `value` are built in; any other field is a shared
-# per-key column such as a description. Format comes from the file extension.
+# a column header for CSV. `$key` and `$value` are yakugo's built-in fields (the `$`
+# marks them as reserved); any other field is a shared per-key column such as a
+# description. Format comes from the file extension.
 # `sourceLocale` is the reference locale of a project, shown first in the editor; a
 # top-level `sourceLocale` would act as the default for projects that leave it out.
 
@@ -36,7 +37,7 @@ projects:
     path: extension/_locales
     files: "{locale}/messages.json"
     fields:
-      value: message
+      $value: message
       description: description
     placeholders:
       pattern: "$placeholder$"
@@ -51,8 +52,8 @@ projects:
     files: strings.json
     records: entries
     fields:
-      key: id
-      value: "text.{locale}"
+      $key: id
+      $value: "text.{locale}"
       comment: comment
     placeholders:
       pattern: "{placeholder}"
@@ -66,8 +67,8 @@ projects:
     path: marketing
     files: strings.csv
     fields:
-      key: Key
-      value: "{locale}"
+      $key: Key
+      $value: "{locale}"
       context: Context
 
   # 5. CSV, one file per locale. Shared fields live in the source locale file.
@@ -76,6 +77,6 @@ projects:
     path: emails
     files: "{locale}.csv"
     fields:
-      key: id
-      value: text
+      $key: id
+      $value: text
       notes: notes

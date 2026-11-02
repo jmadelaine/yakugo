@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n web,api -c cyan,magenta \"vite\" \"tsx watch --env-file=.env server/index.ts\"",
+    "dev": "concurrently -n web,api -c cyan,magenta \"vite\" \"LOCAL_DATA_DIR=example-repo tsx watch --env-file-if-exists=.env server/index.ts\"",
+    "dev:github": "concurrently -n web,api -c cyan,magenta \"vite\" \"tsx watch --env-file=.env server/index.ts\"",
     "build": "tsc -b && vite build",
     "start": "NODE_ENV=production tsx --env-file=.env server/index.ts",
     "typecheck": "tsc -b",

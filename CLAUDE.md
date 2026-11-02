@@ -9,15 +9,16 @@ edits as a draft branch, propose the draft as a PR, review a translation-level d
 
 Translations live in a separate GitHub repo (`GITHUB_REPO`). A `yakugo.yaml` at its root
 lists projects; each has a `name`, a `path` (sub dir), a `files` pattern, a format (json
-or csv, from the extension) and `fields`: paths into one record for `key`, `value` and
+or csv, from the extension) and `fields`: paths into one record for `$key`, `$value` and
 any shared per-key fields such as `description`. `{locale}` sits either in `files` (one
-file per locale) or in the `value` path (one file for all locales). Without the file,
+file per locale) or in the `$value` path (one file for all locales). Without the file,
 one project at `LOCALES_DIR` with `<locale>.json` is assumed. See README for the schema.
 This app never clones that repo; every read and write goes through the GitHub REST API
 with the signed-in user's OAuth token.
 
-For development, `LOCAL_DATA_DIR=example-repo` swaps GitHub for a folder on disk that
-stands in for the target repo (`example-repo/`). Sign-in then needs no OAuth app.
+For development, `pnpm dev` sets `LOCAL_DATA_DIR=example-repo`, which swaps GitHub for a
+folder on disk that stands in for the target repo (`example-repo/`). Sign-in then needs
+no OAuth app. `pnpm dev:github` reads `.env` and uses the real GitHub repo instead.
 
 ## Stack
 
@@ -98,7 +99,7 @@ Server code imports it with relative paths.
 - **Local mode** keeps PR branches as file snapshots in `example-repo/.state.json`.
   Merge is a key-level three-way merge (`mergeTranslations`); conflicting keys give 409.
 - **Nested vs flat JSON** is detected per file and preserved on write; new files nest.
-- **Shared fields** (anything in `fields` besides key/value) are one column for all
+- **Shared fields** (anything in `fields` besides `$key`/`$value`) are one column for all
   locales. With one file per locale they are read from and written to the source locale.
 - **Empty cell = absent**; empty strings are not written.
 - Non-string JSON leaves are shown as their JSON text; an unchanged one is left as is.
@@ -115,7 +116,8 @@ Server code imports it with relative paths.
 ## Commands
 
 ```
-pnpm dev        # vite :5173 + API :8787 (vite proxies /api and /auth)
+pnpm dev        # vite :5173 + API :8787 against example-repo (vite proxies /api and /auth)
+pnpm dev:github # same, against the GitHub repo in .env
 pnpm test       # vitest
 pnpm typecheck  # tsc -b (app, server, node configs)
 pnpm lint       # oxlint

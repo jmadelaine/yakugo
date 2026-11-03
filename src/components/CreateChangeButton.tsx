@@ -67,8 +67,8 @@ function CreateChangeForm({ destination, onClose }: CreateChangeButtonProps & { 
         <Button onClick={onClose} disabled={submitting}>
           {'Cancel'}
         </Button>
-        <Button type="submit" variant="primary" disabled={submitting || !title.trim()}>
-          {submitting ? 'Creating' : 'Create'}
+        <Button type="submit" variant="primary" loading={submitting} disabled={!title.trim()}>
+          {'Create'}
         </Button>
       </div>
     </form>

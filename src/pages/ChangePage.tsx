@@ -87,8 +87,8 @@ export function ChangePage() {
             </Button>
           )}
           {isDraft && (
-            <Button variant="danger" disabled={busy !== undefined} onClick={() => run('delete')}>
-              {busy === 'delete' ? 'Deleting' : 'Delete draft'}
+            <Button variant="danger" loading={busy === 'delete'} disabled={busy !== undefined} onClick={() => run('delete')}>
+              {'Delete draft'}
             </Button>
           )}
           {isDraft && (
@@ -97,13 +97,13 @@ export function ChangePage() {
             </Button>
           )}
           {!isDraft && isOpen && (
-            <Button variant="danger" disabled={busy !== undefined} onClick={() => run('withdraw')}>
-              {busy === 'withdraw' ? 'Withdrawing' : 'Withdraw'}
+            <Button variant="danger" loading={busy === 'withdraw'} disabled={busy !== undefined} onClick={() => run('withdraw')}>
+              {'Withdraw'}
             </Button>
           )}
           {!isDraft && isOpen && (
-            <Button variant="primary" disabled={!canMerge || busy !== undefined} onClick={() => run('merge')}>
-              {busy === 'merge' ? 'Merging' : 'Merge'}
+            <Button variant="primary" loading={busy === 'merge'} disabled={!canMerge || busy !== undefined} onClick={() => run('merge')}>
+              {'Merge'}
             </Button>
           )}
         </div>
@@ -250,8 +250,8 @@ function SubmitForm({
         <Button onClick={onClose} disabled={submitting}>
           {'Cancel'}
         </Button>
-        <Button type="submit" variant="primary" disabled={submitting || !title.trim()}>
-          {submitting ? 'Submitting' : 'Submit'}
+        <Button type="submit" variant="primary" loading={submitting} disabled={!title.trim()}>
+          {'Submit'}
         </Button>
       </div>
     </form>
@@ -352,8 +352,8 @@ function DetailsForm({ change, onClose, onSaved }: { change: BranchDetail; onClo
         <Button onClick={onClose} disabled={submitting}>
           {'Cancel'}
         </Button>
-        <Button type="submit" variant="primary" disabled={submitting || !title.trim()}>
-          {submitting ? 'Saving' : 'Save'}
+        <Button type="submit" variant="primary" loading={submitting} disabled={!title.trim()}>
+          {'Save'}
         </Button>
       </div>
     </form>

@@ -24,6 +24,11 @@ type NativeButtonProps = CommonProps &
     to?: undefined
     href?: undefined
     ref?: Ref<HTMLButtonElement>
+    /**
+     * Shows a spinner over the label and disables the button. The label stays in
+     * the layout (hidden) so the button keeps its width.
+     */
+    loading?: boolean
   }
 type LinkProps = CommonProps & { to: string; href?: undefined; target?: string; rel?: string; title?: string }
 type AnchorProps = CommonProps &
@@ -83,10 +88,26 @@ export function Button(props: ButtonProps) {
       </a>
     )
   }
-  const { type = 'button', ...buttonRest } = rest as NativeButtonProps
+  const { type = 'button', loading = false, disabled, ...buttonRest } = rest as NativeButtonProps
   return (
-    <button type={type} className={cls} {...buttonRest}>
-      {children}
+    <button
+      type={type}
+      className={loading ? `${cls} loading` : cls}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      {...buttonRest}
+    >
+      {loading ? <span className="button-content">{children}</span> : children}
+      {loading && <Spinner />}
     </button>
+  )
+}
+
+function Spinner() {
+  return (
+    <svg className="button-spinner" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" opacity="0.25" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
   )
 }

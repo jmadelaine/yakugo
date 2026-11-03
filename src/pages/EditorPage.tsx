@@ -179,8 +179,8 @@ function Editor({
             <Button onClick={() => setDialogOpen(false)} disabled={submitting}>
               {'Cancel'}
             </Button>
-            <Button type="submit" variant="primary" disabled={submitting}>
-              {submitting ? 'Saving' : 'Save'}
+            <Button type="submit" variant="primary" loading={submitting}>
+              {'Save'}
             </Button>
           </div>
         </form>
